@@ -19,20 +19,22 @@ def build_shared_mlp(mlp_spec: List[int], bn: bool = True):
     return nn.Sequential(*layers)
 
 class FPS(nn.Module):
-	def __init__(self):
+    def __init__(self):
         super(FPS, self).__init__()
     def forward(self, xyz, point_number):
         xyz_flipped = xyz.transpose(1, 2).contiguous()
+        idxs = pointnet2_utils.furthest_point_sample(xyz, point_number)
+        #new_xyz = (
+        #    pointnet2_utils.gather_operation(
+        #        xyz_flipped, pointnet2_utils.furthest_point_sample(xyz, point_number)
         new_xyz = (
             pointnet2_utils.gather_operation(
-                xyz_flipped, pointnet2_utils.furthest_point_sample(xyz, point_number)
+                xyz_flipped, idxs
             )
             .transpose(1, 2)
             .contiguous()
-            if point_number is not None
-            else None
         )
-        return new_xyz
+        return new_xyz, idxs
 
 class _PointnetSAModuleBase(nn.Module):
     def __init__(self):
